@@ -2,6 +2,7 @@ package id.kingra.otp_service.service.impl;
 
 import id.kingra.otp_service.dto.EmailDto;
 import id.kingra.otp_service.dto.OtpReqDto;
+import id.kingra.otp_service.dto.VerificationOtpDto;
 import id.kingra.otp_service.entity.TempOtp;
 import id.kingra.otp_service.repository.TempOtpRepository;
 import id.kingra.otp_service.service.OTPService;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -30,15 +32,30 @@ public class OTPServiceImpl implements OTPService {
         opTempOtp.ifPresent(tempOtpRepository::delete);
 
         String randomOtp = Helper.generateOTP();
-        saveToRedis(email);
+        saveToRedis(email, randomOtp);
         sendingEmail(email, "This is your verification code : " + randomOtp);
     }
 
-    private void saveToRedis(String email) {
-        String randomOTP = Helper.generateOTP();
-        log.info("Random-OTP : {}", randomOTP);
+    @Override
+    public ResponseEntity<?> verificationOtp(VerificationOtpDto request) {
+        Optional<TempOtp> opTempOtp = tempOtpRepository.getFirstByEmail(request.getEmail());
+        if (opTempOtp.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        TempOtp tempOtp = opTempOtp.get();
+
+        if (!tempOtp.getOtp().equals(request.getOtp())) {
+            return ResponseEntity.unprocessableEntity().build();
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    private void saveToRedis(String email, String otp) {
+        log.info("Random-OTP : {}", otp);
         TempOtp tempOtp = new TempOtp();
-        tempOtp.setOtp(randomOTP);
+        tempOtp.setOtp(otp);
         tempOtp.setEmail(email);
         tempOtpRepository.save(tempOtp);
     }

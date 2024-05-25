@@ -1,6 +1,7 @@
 package id.kingra.otp_service.controller;
 
 import id.kingra.otp_service.dto.OtpReqDto;
+import id.kingra.otp_service.dto.VerificationOtpDto;
 import id.kingra.otp_service.service.OTPService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
-@RestController @RequiredArgsConstructor
+@RestController
+@RequiredArgsConstructor
 public class OTPController {
 
     private final OTPService otpService;
@@ -30,6 +32,11 @@ public class OTPController {
         String port = environment.getProperty("local.server.port");
         log.debug("Execute Port : {}", port);
         return port;
+    }
+
+    @PostMapping("/verification-otp")
+    public ResponseEntity<?> verificationOtp(@RequestBody VerificationOtpDto request) {
+        return otpService.verificationOtp(request);
     }
 }
 
